@@ -1,0 +1,24 @@
+---
+name: bind9-aiops
+slug: bind9-aiops
+displayName: "BIND 9 AIops"
+summary: "Governed BIND 9 DNS service, zone, DNSSEC and SOA diagnosis."
+license: MIT
+homepage: https://github.com/AIops-tools/BIND9-AIops
+tags: [aiops, mcp, governance, bind9, dns]
+description: >
+  Use this skill when a user needs to inspect a BIND 9 DNS server, validate loaded zones, diagnose SERVFAIL, inspect DNSSEC validation, or compare primary and secondary SOA serials. This first slice is read-only. It requires local rndc, named-checkconf and dig utilities and appropriate server-side permissions.
+installer:
+  kind: uv
+  package: bind9-aiops
+argument-hint: "[DNS zone or record name]"
+allowed-tools:
+  - Bash
+metadata: {"openclaw":{"requires":{"anyBins":["uvx"]},"optional":{"env":["BIND9_AIOPS_CONFIG"]},"homepage":"https://github.com/AIops-tools/BIND9-AIops","emoji":"🌐","os":["macos","linux"]}}
+---
+
+# BIND 9 AIops
+
+Start with `bind9-aiops diagnose <zone>` to correlate service, config, zone, SOA and DNSSEC checks. Use `bind9-aiops compare-soa <zone> <secondary>` when a secondary may be stale. Run `bind9-aiops init` to configure a target and `bind9-aiops doctor` to test `rndc` access.
+
+Check `rcode`, `error`, `complete`, `failedProbes` and `serialsMatch`. `serialsMatch: null` means the comparison could not be made. Do not report SERVFAIL as an empty zone or an equal serial. The MCP server has 7 DNS read tools and `undo_list`/`undo_apply`; this version records no BIND undo token. See [guardrails](references/agent-guardrails.md) and [capabilities](references/capabilities.md).
