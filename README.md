@@ -1,7 +1,7 @@
 <!-- mcp-name: io.github.AIops-tools/bind9-aiops -->
 # BIND 9 AIops
 
-Governed BIND 9 DNS operations with 17 MCP tools and corresponding CLI commands. It executes `rndc`, `named-checkconf` and `dig` as fixed argument lists without a shell. Every call is audited and budgeted by the bundled governance harness.
+Governed BIND 9 DNS operations with 21 MCP tools and corresponding CLI commands. It executes `rndc`, `named-checkconf` and `dig` as fixed argument lists without a shell. Every call is audited and budgeted by the bundled governance harness.
 
 ## What it checks
 
@@ -9,6 +9,7 @@ Governed BIND 9 DNS operations with 17 MCP tools and corresponding CLI commands.
 - Configuration and loaded-zone validation with `named-checkconf -z`.
 - DNSSEC validation mode.
 - Zone DNSSEC signing, managed-key and serve-stale status; running zone configuration where enabled.
+- Recursive fetch-limit hits, DNSSEC trust anchors, DNS TCP timeouts and per-zone signing progress.
 - DNS queries with their actual DNS response code.
 - Queries against a selected secondary server.
 - Primary and secondary SOA serial comparison. A failed or unparseable query returns `null`, never a fabricated zero or match.

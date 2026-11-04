@@ -11,6 +11,24 @@ def status(conn: BindConnection) -> dict:
     return conn.rndc("status")
 
 
+def fetch_limits(conn: BindConnection) -> dict:
+    return conn.rndc("fetchlimit")
+
+
+def security_roots(conn: BindConnection) -> dict:
+    # '-' returns the roots on rndc's response channel instead of writing a file.
+    return conn.rndc("secroots", "-")
+
+
+def tcp_timeouts(conn: BindConnection) -> dict:
+    # No arguments makes this command read-only.
+    return conn.rndc("tcp-timeouts")
+
+
+def signing_status(conn: BindConnection, zone: str) -> dict:
+    return conn.rndc("signing", "-list", domain(zone))
+
+
 def config_check(conn: BindConnection) -> dict:
     return conn.check_config()
 

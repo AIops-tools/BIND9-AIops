@@ -22,6 +22,38 @@ def _print(result: dict) -> None:
     console.print_json(json.dumps(governed(result)))
 
 
+@app.command("fetch-limits")
+@cli_errors
+def fetch_limits(target: Target = None) -> None:
+    """Show recursive fetch limit hits."""
+    from bind9_aiops.mcp_server.tools.dns import bind_fetch_limits
+    _print(bind_fetch_limits(target=target))
+
+
+@app.command("security-roots")
+@cli_errors
+def security_roots(target: Target = None) -> None:
+    """Show DNSSEC trust anchors through rndc, without a dump file."""
+    from bind9_aiops.mcp_server.tools.dns import bind_security_roots
+    _print(bind_security_roots(target=target))
+
+
+@app.command("tcp-timeouts")
+@cli_errors
+def tcp_timeouts(target: Target = None) -> None:
+    """Show current DNS TCP timeouts."""
+    from bind9_aiops.mcp_server.tools.dns import bind_tcp_timeouts
+    _print(bind_tcp_timeouts(target=target))
+
+
+@app.command("signing-status")
+@cli_errors
+def signing_status(zone: str, target: Target = None) -> None:
+    """Show DNSSEC signing state for a zone."""
+    from bind9_aiops.mcp_server.tools.dns import bind_signing_status
+    _print(bind_signing_status(zone=zone, target=target))
+
+
 @app.command("dnssec-zone")
 @cli_errors
 def dnssec_zone(zone: str, target: Target = None) -> None:

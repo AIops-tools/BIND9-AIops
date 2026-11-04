@@ -115,6 +115,26 @@ def test_additional_read_commands_use_official_rndc_argv():
     ]
 
 
+def test_fetch_limits_security_roots_tcp_timeouts_and_signing_are_read_only():
+    seen = []
+
+    def runner(argv, **kwargs):
+        seen.append(argv)
+        return subprocess.CompletedProcess(argv, 0, "current status\n", "")
+
+    conn = BindConnection(TargetConfig("lab"), runner=runner)
+    assert dns.fetch_limits(conn)["output"] == "current status\n"
+    dns.security_roots(conn)
+    dns.tcp_timeouts(conn)
+    dns.signing_status(conn, "example.org")
+    assert seen == [
+        ["rndc", "fetchlimit"], ["rndc", "secroots", "-"],
+        ["rndc", "tcp-timeouts"], ["rndc", "signing", "-list", "example.org"],
+    ]
+    with pytest.raises(ValueError, match="Invalid DNS name"):
+        dns.signing_status(conn, "example.org;bad")
+
+
 def test_reload_zone_dry_run_only_reads_and_acceptance_is_unknown(monkeypatch, tmp_path):
     from bind9_aiops.governance.audit import reset_engine
     from bind9_aiops.mcp_server.tools import dns as tools

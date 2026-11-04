@@ -11,6 +11,38 @@ from bind9_aiops.ops import dns
 @mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
+def bind_fetch_limits(target: Optional[str] = None) -> dict:
+    """[READ] Show servers and domains currently limited by recursive fetch caps."""
+    return dns.fetch_limits(_get_connection(target))
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def bind_security_roots(target: Optional[str] = None) -> dict:
+    """[READ] Show trust anchors through rndc's response channel, without a dump file."""
+    return dns.security_roots(_get_connection(target))
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def bind_tcp_timeouts(target: Optional[str] = None) -> dict:
+    """[READ] Show current DNS TCP timeouts without changing them."""
+    return dns.tcp_timeouts(_get_connection(target))
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def bind_signing_status(zone: str, target: Optional[str] = None) -> dict:
+    """[READ] List a zone's ongoing and completed DNSSEC signing state."""
+    return dns.signing_status(_get_connection(target), zone)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
 def bind_dnssec_zone_status(zone: str, target: Optional[str] = None) -> dict:
     """[READ] Show DNSSEC signing status for one zone."""
     return dns.dnssec_zone_status(_get_connection(target), zone)
