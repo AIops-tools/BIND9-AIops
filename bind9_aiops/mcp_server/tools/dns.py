@@ -131,6 +131,44 @@ def bind_flush_name(name: str, dry_run: bool = False, target: Optional[str] = No
 
 
 @mcp.tool()
+@governed_tool(risk_level="high")
+@tool_errors()
+def bind_retransfer_zone(
+    zone: str, dry_run: bool = False, target: Optional[str] = None
+) -> dict:
+    """[WRITE] Request a secondary zone retransfer; completion remains unknown."""
+    conn = _get_connection(target)
+    zone = domain(zone)
+    before = dns.zone_status(conn, zone)
+    if dry_run:
+        return {"dryRun": True, "zone": zone, "before": before,
+                "wouldRun": "rndc retransfer"}
+    response = conn.rndc_write("retransfer", zone)
+    return mark_unknown({
+        "accepted": True, "zone": zone, "before": before, "response": response,
+        "note": "Compare zonestatus and authoritative SOA after the transfer finishes.",
+    })
+
+
+@mcp.tool()
+@governed_tool(risk_level="medium")
+@tool_errors()
+def bind_notify_zone(zone: str, dry_run: bool = False, target: Optional[str] = None) -> dict:
+    """[WRITE] Resend NOTIFY for one zone; downstream refresh remains unknown."""
+    conn = _get_connection(target)
+    zone = domain(zone)
+    before = dns.zone_status(conn, zone)
+    if dry_run:
+        return {"dryRun": True, "zone": zone, "before": before,
+                "wouldRun": "rndc notify"}
+    response = conn.rndc_write("notify", zone)
+    return mark_unknown({
+        "accepted": True, "zone": zone, "before": before, "response": response,
+        "note": "NOTIFY acceptance does not prove a secondary refreshed its zone.",
+    })
+
+
+@mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
 def bind_status(target: Optional[str] = None) -> dict:

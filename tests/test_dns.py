@@ -160,6 +160,38 @@ def test_reload_zone_dry_run_only_reads_and_acceptance_is_unknown(monkeypatch, t
         reset_engine()
 
 
+def test_retransfer_and_notify_are_governed_dry_run_and_unknown(monkeypatch, tmp_path):
+    from bind9_aiops.governance.audit import reset_engine
+    from bind9_aiops.mcp_server.tools import dns as tools
+
+    seen = []
+
+    def runner(argv, **kwargs):
+        assert argv in (
+            ["rndc", "zonestatus", "example.org"],
+            ["rndc", "retransfer", "example.org"],
+            ["rndc", "notify", "example.org"],
+        )
+        seen.append(argv)
+        return subprocess.CompletedProcess(argv, 0, "queued\n", "")
+
+    conn = BindConnection(TargetConfig("lab"), runner=runner)
+    monkeypatch.setattr(tools, "_get_connection", lambda target=None: conn)
+    monkeypatch.setenv("BIND9_AIOPS_HOME", str(tmp_path))
+    reset_engine()
+    try:
+        assert tools.bind_retransfer_zone("example.org", dry_run=True)["dryRun"] is True
+        assert tools.bind_notify_zone("example.org", dry_run=True)["dryRun"] is True
+        assert not any(argv[1] in ("retransfer", "notify") for argv in seen)
+        assert tools.bind_retransfer_zone("example.org")["outcomeUnknown"] is True
+        assert tools.bind_notify_zone("example.org")["outcomeUnknown"] is True
+        assert [argv for argv in seen if argv[1] in ("retransfer", "notify")] == [
+            ["rndc", "retransfer", "example.org"], ["rndc", "notify", "example.org"],
+        ]
+    finally:
+        reset_engine()
+
+
 def test_reload_timeout_is_unknown_but_definite_rejection_is_error(monkeypatch, tmp_path):
     from bind9_aiops.governance.audit import reset_engine
     from bind9_aiops.mcp_server.tools import dns as tools

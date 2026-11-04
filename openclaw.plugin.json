@@ -1,7 +1,7 @@
 {
   "id": "bind9-aiops",
   "name": "BIND 9 AIops",
-  "description": "Governed BIND 9 DNS operations — 17 MCP tools with audit.",
+  "description": "Governed BIND 9 DNS operations — 23 MCP tools with audit.",
   "skills": [
     "./skills"
   ],

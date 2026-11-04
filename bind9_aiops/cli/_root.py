@@ -124,6 +124,26 @@ def flush_name(name: str, dry_run: bool = False, target: Target = None) -> None:
     _print(bind_flush_name(name=name, dry_run=dry_run, target=target))
 
 
+@app.command("retransfer-zone")
+@cli_errors
+def retransfer_zone(zone: str, dry_run: bool = False, target: Target = None) -> None:
+    """Request a fresh transfer of one secondary zone."""
+    from bind9_aiops.mcp_server.tools.dns import bind_retransfer_zone
+    if not dry_run:
+        double_confirm("retransfer secondary zone", zone)
+    _print(bind_retransfer_zone(zone=zone, dry_run=dry_run, target=target))
+
+
+@app.command("notify-zone")
+@cli_errors
+def notify_zone(zone: str, dry_run: bool = False, target: Target = None) -> None:
+    """Resend NOTIFY for one zone."""
+    from bind9_aiops.mcp_server.tools.dns import bind_notify_zone
+    if not dry_run:
+        double_confirm("resend zone NOTIFY", zone)
+    _print(bind_notify_zone(zone=zone, dry_run=dry_run, target=target))
+
+
 @app.command("init")
 @cli_errors
 def init() -> None:
