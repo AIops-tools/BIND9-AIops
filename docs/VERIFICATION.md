@@ -2,12 +2,14 @@
 
 ## Source-backed commands
 
-The [ISC BIND 9 Administrator Reference Manual](https://bind9.readthedocs.io/en/stable/manpages.html), checked 2026-11-04, documents `rndc status`, `rndc zonestatus`, `rndc validation status`, `named-checkconf -z`, and `dig`. The implementation uses those commands without shell interpolation. The [DNSSEC guide](https://bind9.readthedocs.io/en/stable/dnssec-guide.html) documents DNSSEC validation failure modes; this slice reports current status rather than asserting root cause from one response.
+The [ISC BIND 9 Administrator Reference Manual](https://bind9.readthedocs.io/en/stable/manpages.html), checked 2026-11-04, documents `rndc status`, `zonestatus`, `validation status`, `dnssec -status`, `managed-keys status`, `serve-stale status`, `showzone`, `reload`, `refresh`, `flushname`, `named-checkconf -z`, and `dig`. The implementation uses fixed argument lists without shell interpolation. The [DNSSEC guide](https://bind9.readthedocs.io/en/stable/dnssec-guide.html) documents validation failure modes; this tool reports status rather than asserting root cause from one response.
 
 ## Local verification
 
-`tests/test_dns.py` uses a strict command runner fake. It checks exact argv, no shell, invalid names, SOA mismatch, SERVFAIL-to-null, failed `rndc` and partial diagnosis. Governance invariant tests come from the current tool line. The local result is 121 passing tests, Ruff clean, Bandit Medium+ 0, and a successful source/wheel build on 2026-11-04.
+`tests/test_dns.py` uses a strict command runner fake. It checks exact argv, no shell, invalid names, SOA mismatch, SERVFAIL-to-null, failed `rndc`, partial diagnosis, dry-run no-write, timeout-to-unknown and definite rejection-to-error. Governance invariant tests come from the current tool line. Current result: 124 passing tests, Ruff clean, Bandit 0 Medium+ and wheel/sdist build on 2026-11-04.
+
+The 0.2.0 wheel was installed into a new environment outside the source tree; `bind9_aiops.__file__` resolved under `site-packages`. Its CLI ran diagnosis, reload preview and real reload against strict local command stand-ins. The log contained exactly one `rndc reload` (the preview wrote none), and the accepted command exited 2 for unknown outcome. These stand-ins are not a BIND daemon.
 
 ## Not yet live verified
 
-This machine has `dig`, but no `named`, `rndc`, or `named-checkconf`. Docker's daemon was not running. No real BIND daemon, zone file, DNSSEC failure, secondary lag, or write/undo cycle has been tested. Do not call this production validated or published. The next gate is a disposable primary/secondary BIND lab with a deliberately stale secondary and a broken zone, compared with native command output.
+This machine has `dig`, but no `named`, `rndc`, or `named-checkconf`. Docker's daemon was not running. No real BIND daemon, zone file, DNSSEC failure, secondary lag, or write cycle has been tested. These commands have no safe undo. Do not call the package production validated. The next gate is a disposable primary/secondary BIND lab with a deliberately stale secondary and a broken zone, compared with native command output.

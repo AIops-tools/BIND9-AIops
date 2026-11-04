@@ -2,8 +2,8 @@
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "bind9-aiops",
   "displayName": "BIND 9 AIops",
-  "version": "0.1.0",
-  "description": "Governed BIND 9 DNS diagnosis \u2014 9 MCP tools with audit.",
+  "version": "0.2.0",
+  "description": "Governed BIND 9 DNS operations — 17 MCP tools with audit.",
   "author": {
     "name": "Wei Zhou",
     "email": "zhouwei008@gmail.com",

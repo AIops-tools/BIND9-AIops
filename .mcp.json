@@ -5,7 +5,7 @@
       "command": "uvx",
       "args": [
         "--from",
-        "bind9-aiops==0.1.0",
+        "bind9-aiops==0.2.0",
         "bind9-aiops-mcp"
       ]
     }

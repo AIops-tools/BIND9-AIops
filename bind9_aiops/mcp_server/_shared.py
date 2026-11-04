@@ -11,8 +11,8 @@ from typing import Any, Optional
 from mcp.server import MCPServer
 
 from bind9_aiops import __version__
-from bind9_aiops.connection import BindCommandError, ConnectionManager
-from bind9_aiops.governance import sanitize
+from bind9_aiops.connection import BindCommandError, BindWriteUncertainError, ConnectionManager
+from bind9_aiops.governance import mark_unknown, sanitize
 
 logger = logging.getLogger(__name__)
 _ERROR_MAX = 800
@@ -33,10 +33,13 @@ def tool_errors(shape: str = "dict") -> Callable:
                     )
                     else f"{type(exc).__name__}: operation failed."
                 )
-                return {
+                payload = {
                     "error": message,
                     "hint": "Run 'bind9-aiops doctor' and check local command permissions.",
                 }
+                if isinstance(exc, BindWriteUncertainError):
+                    return mark_unknown(payload)
+                return payload
 
         return wrapper
 
@@ -47,7 +50,7 @@ mcp = MCPServer(
     "bind9-aiops",
     version=__version__,
     instructions=(
-        "Read-only BIND 9 DNS and zone diagnosis using rndc, named-checkconf and dig. "
+        "Governed BIND 9 DNS and zone diagnosis using rndc, named-checkconf and dig. "
         "Every tool is audited and budgeted."
     ),
 )

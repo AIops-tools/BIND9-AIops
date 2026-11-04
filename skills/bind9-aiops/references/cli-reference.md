@@ -1,3 +1,3 @@
 # CLI reference
 
-`bind9-aiops init`, `doctor`, `status`, `config-check`, `zone-status <zone>`, `dnssec`, `query <name> [rrtype]`, `compare-soa <zone> <secondary>`, and `diagnose <zone>` are the local commands. Use `--target` to choose a configured target. `bind9-aiops mcp` starts the stdio server. CLI DNS operations call the governed MCP twins and are audited.
+`bind9-aiops init`, `doctor`, `status`, `config-check`, `zone-status <zone>`, `dnssec`, `dnssec-zone <zone>`, `managed-keys`, `serve-stale`, `show-zone <zone>`, `query <name> [rrtype]`, `query-server <name> <server>`, `compare-soa <zone> <secondary>`, and `diagnose <zone>` are read commands. `reload-zone <zone>`, `refresh-zone <zone>`, and `flush-name <name>` support `--dry-run`; real CLI calls require two confirmations and accepted-but-unproven results exit 2. Use `--target` to choose a target. `bind9-aiops mcp` starts stdio MCP. CLI operations call governed MCP twins.

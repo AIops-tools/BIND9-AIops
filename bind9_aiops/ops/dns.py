@@ -23,6 +23,26 @@ def dnssec_status(conn: BindConnection) -> dict:
     return conn.rndc("validation", "status")
 
 
+def dnssec_zone_status(conn: BindConnection, zone: str) -> dict:
+    return conn.rndc("dnssec", "-status", domain(zone))
+
+
+def managed_keys_status(conn: BindConnection) -> dict:
+    return conn.rndc("managed-keys", "status")
+
+
+def serve_stale_status(conn: BindConnection) -> dict:
+    return conn.rndc("serve-stale", "status")
+
+
+def show_zone(conn: BindConnection, zone: str) -> dict:
+    return conn.rndc("showzone", domain(zone))
+
+
+def query_server(conn: BindConnection, name: str, rrtype: str, server: str) -> dict:
+    return conn.query(name, rrtype, server)
+
+
 def query(conn: BindConnection, name: str, rrtype: str = "A") -> dict:
     return conn.query(name, rrtype)
 

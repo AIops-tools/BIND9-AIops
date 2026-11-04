@@ -9,7 +9,7 @@ from typing import Annotated
 import typer
 import yaml
 
-from bind9_aiops.cli._common import cli_errors, console, governed
+from bind9_aiops.cli._common import cli_errors, console, double_confirm, governed
 from bind9_aiops.cli.undo import undo_app
 from bind9_aiops.governance.paths import ops_home
 
@@ -20,6 +20,76 @@ Target = Annotated[str | None, typer.Option("--target", "-t", help="Configured B
 
 def _print(result: dict) -> None:
     console.print_json(json.dumps(governed(result)))
+
+
+@app.command("dnssec-zone")
+@cli_errors
+def dnssec_zone(zone: str, target: Target = None) -> None:
+    """Show DNSSEC signing status for a zone."""
+    from bind9_aiops.mcp_server.tools.dns import bind_dnssec_zone_status
+    _print(bind_dnssec_zone_status(zone=zone, target=target))
+
+
+@app.command("managed-keys")
+@cli_errors
+def managed_keys(target: Target = None) -> None:
+    """Show managed DNSSEC trust-key status."""
+    from bind9_aiops.mcp_server.tools.dns import bind_managed_keys_status
+    _print(bind_managed_keys_status(target=target))
+
+
+@app.command("serve-stale")
+@cli_errors
+def serve_stale(target: Target = None) -> None:
+    """Show serve-stale mode."""
+    from bind9_aiops.mcp_server.tools.dns import bind_serve_stale_status
+    _print(bind_serve_stale_status(target=target))
+
+
+@app.command("show-zone")
+@cli_errors
+def show_zone(zone: str, target: Target = None) -> None:
+    """Show running zone configuration when enabled."""
+    from bind9_aiops.mcp_server.tools.dns import bind_show_zone
+    _print(bind_show_zone(zone=zone, target=target))
+
+
+@app.command("query-server")
+@cli_errors
+def query_server(name: str, server: str, rrtype: str = "A", target: Target = None) -> None:
+    """Query a specified DNS server."""
+    from bind9_aiops.mcp_server.tools.dns import bind_query_server
+    _print(bind_query_server(name=name, server=server, rrtype=rrtype, target=target))
+
+
+@app.command("reload-zone")
+@cli_errors
+def reload_zone(zone: str, dry_run: bool = False, target: Target = None) -> None:
+    """Check config, then queue a zone reload."""
+    from bind9_aiops.mcp_server.tools.dns import bind_reload_zone
+    if not dry_run:
+        double_confirm("reload zone", zone)
+    _print(bind_reload_zone(zone=zone, dry_run=dry_run, target=target))
+
+
+@app.command("refresh-zone")
+@cli_errors
+def refresh_zone(zone: str, dry_run: bool = False, target: Target = None) -> None:
+    """Request a secondary zone refresh."""
+    from bind9_aiops.mcp_server.tools.dns import bind_refresh_zone
+    if not dry_run:
+        double_confirm("refresh zone", zone)
+    _print(bind_refresh_zone(zone=zone, dry_run=dry_run, target=target))
+
+
+@app.command("flush-name")
+@cli_errors
+def flush_name(name: str, dry_run: bool = False, target: Target = None) -> None:
+    """Flush one name from the DNS cache."""
+    from bind9_aiops.mcp_server.tools.dns import bind_flush_name
+    if not dry_run:
+        double_confirm("flush cached name", name)
+    _print(bind_flush_name(name=name, dry_run=dry_run, target=target))
 
 
 @app.command("init")

@@ -17,6 +17,10 @@ class BindCommandError(Exception):
     pass
 
 
+class BindWriteUncertainError(BindCommandError):
+    """The rndc write may have reached named before the response was lost."""
+
+
 def domain(value: str) -> str:
     if not _DOMAIN.fullmatch(value) or value.startswith("-") or ".." in value:
         raise ValueError("Invalid DNS name; use a domain or host name without command options.")
@@ -28,7 +32,7 @@ class BindConnection:
         self.target = target
         self._run = runner
 
-    def _command(self, argv: list[str]) -> dict:
+    def _command(self, argv: list[str], *, write: bool = False) -> dict:
         try:
             result = self._run(
                 argv, capture_output=True, text=True, timeout=self.target.timeout, check=False
@@ -38,7 +42,8 @@ class BindConnection:
                 f"Missing BIND command '{argv[0]}'; install bind9 utilities or configure its path."
             ) from exc
         except subprocess.TimeoutExpired as exc:
-            raise BindCommandError(
+            error_type = BindWriteUncertainError if write else BindCommandError
+            raise error_type(
                 f"BIND command '{argv[0]}' timed out after {self.target.timeout:g}s."
             ) from exc
         if result.returncode != 0:
@@ -58,6 +63,13 @@ class BindConnection:
             argv.extend(["-c", self.target.rndc_config])
         argv.extend(arguments)
         return self._command(argv)
+
+    def rndc_write(self, *arguments: str) -> dict:
+        argv = [self.target.rndc_bin]
+        if self.target.rndc_config:
+            argv.extend(["-c", self.target.rndc_config])
+        argv.extend(arguments)
+        return self._command(argv, write=True)
 
     def check_config(self) -> dict:
         argv = [self.target.checkconf_bin, "-z"]

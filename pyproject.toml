@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bind9-aiops"
-version = "0.1.0"
+version = "0.2.0"
 description = "Governed BIND 9 DNS diagnosis for service, zones, DNSSEC and SOA replication."
 readme = "README.md"
 license = "MIT"

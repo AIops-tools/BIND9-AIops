@@ -93,3 +93,75 @@ def test_missing_command_is_teaching_error():
     conn = BindConnection(TargetConfig("lab"), runner=runner)
     with pytest.raises(BindCommandError, match="install bind9 utilities"):
         dns.status(conn)
+
+
+def test_additional_read_commands_use_official_rndc_argv():
+    seen = []
+
+    def runner(argv, **kwargs):
+        seen.append(argv)
+        return subprocess.CompletedProcess(argv, 0, "status: enabled\n", "")
+
+    conn = BindConnection(TargetConfig("lab"), runner=runner)
+    dns.dnssec_zone_status(conn, "example.org")
+    dns.managed_keys_status(conn)
+    dns.serve_stale_status(conn)
+    dns.show_zone(conn, "example.org")
+    assert seen == [
+        ["rndc", "dnssec", "-status", "example.org"],
+        ["rndc", "managed-keys", "status"],
+        ["rndc", "serve-stale", "status"],
+        ["rndc", "showzone", "example.org"],
+    ]
+
+
+def test_reload_zone_dry_run_only_reads_and_acceptance_is_unknown(monkeypatch, tmp_path):
+    from bind9_aiops.governance.audit import reset_engine
+    from bind9_aiops.mcp_server.tools import dns as tools
+
+    seen = []
+
+    def runner(argv, **kwargs):
+        seen.append(argv)
+        return subprocess.CompletedProcess(argv, 0, "zone reload queued\n", "")
+
+    conn = BindConnection(TargetConfig("lab"), runner=runner)
+    monkeypatch.setattr(tools, "_get_connection", lambda target=None: conn)
+    monkeypatch.setenv("BIND9_AIOPS_HOME", str(tmp_path))
+    reset_engine()
+    try:
+        preview = tools.bind_reload_zone("example.org", dry_run=True)
+        assert preview["dryRun"] is True
+        assert ["rndc", "reload", "example.org"] not in seen
+        result = tools.bind_reload_zone("example.org")
+        assert result["outcomeUnknown"] is True
+        assert ["rndc", "reload", "example.org"] in seen
+    finally:
+        reset_engine()
+
+
+def test_reload_timeout_is_unknown_but_definite_rejection_is_error(monkeypatch, tmp_path):
+    from bind9_aiops.governance.audit import reset_engine
+    from bind9_aiops.mcp_server.tools import dns as tools
+
+    failure = "timeout"
+
+    def runner(argv, **kwargs):
+        if argv[:2] == ["rndc", "reload"]:
+            if failure == "timeout":
+                raise subprocess.TimeoutExpired(argv, 10)
+            return subprocess.CompletedProcess(argv, 1, "", "permission denied")
+        return subprocess.CompletedProcess(argv, 0, "ok\n", "")
+
+    conn = BindConnection(TargetConfig("lab"), runner=runner)
+    monkeypatch.setattr(tools, "_get_connection", lambda target=None: conn)
+    monkeypatch.setenv("BIND9_AIOPS_HOME", str(tmp_path))
+    reset_engine()
+    try:
+        assert tools.bind_reload_zone("example.org")["outcomeUnknown"] is True
+        failure = "rejected"
+        result = tools.bind_reload_zone("example.org")
+        assert "permission denied" in result["error"]
+        assert "outcomeUnknown" not in result
+    finally:
+        reset_engine()

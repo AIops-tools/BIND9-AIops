@@ -1,7 +1,7 @@
 {
   "id": "bind9-aiops",
   "name": "BIND 9 AIops",
-  "description": "Governed BIND 9 DNS diagnosis — 9 MCP tools with audit.",
+  "description": "Governed BIND 9 DNS operations — 17 MCP tools with audit.",
   "skills": [
     "./skills"
   ],
@@ -11,7 +11,7 @@
       "command": "uvx",
       "args": [
         "--from",
-        "bind9-aiops==0.1.0",
+        "bind9-aiops==0.2.0",
         "bind9-aiops-mcp"
       ]
     }
