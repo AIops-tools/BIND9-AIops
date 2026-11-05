@@ -6,7 +6,7 @@ The [ISC BIND 9 Administrator Reference Manual](https://bind9.readthedocs.io/en/
 
 ## Local verification
 
-`tests/test_dns.py` uses a strict command runner fake. It checks exact argv for the new read-only commands, no shell, invalid names, SOA mismatch, SERVFAIL-to-null, failed `rndc`, partial diagnosis, retransfer/NOTIFY dry-run no-write, timeout-to-unknown and definite rejection-to-error. Governance invariant tests come from the current tool line. Current result: 126 passing tests, Ruff clean, Bandit 0 Medium+ and wheel/sdist build on 2026-11-04.
+`tests/test_dns.py` uses a strict command runner fake. It checks exact argv for the new read-only commands, no shell, invalid names, SOA mismatch, SERVFAIL-to-null, failed `rndc`, partial diagnosis, retransfer/NOTIFY dry-run no-write, timeout-to-unknown and definite rejection-to-error. Governance invariant tests come from the current tool line. Current result: 126 passing tests, Ruff clean, Bandit 0 Medium+ and wheel/sdist build, rerun on 2026-11-05.
 
 The current 0.2.0 candidate wheel was rebuilt and installed into a new environment outside the source tree; its MCP registry reports 23 tools. Its `retransfer-zone` and `notify-zone` CLI commands ran preview and real calls against strict local `rndc` stand-ins: previews issued no writes, each real call issued exactly one command and exited 2 for unknown completion. An earlier 0.2.0 candidate wheel was also installed outside the source tree; `bind9_aiops.__file__` resolved under `site-packages`. Its CLI ran diagnosis, reload preview and real reload against strict local command stand-ins. The log contained exactly one `rndc reload` (the preview wrote none), and the accepted command exited 2 for unknown outcome. These stand-ins are not a BIND daemon.
 
