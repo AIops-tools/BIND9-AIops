@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.1 — 2026-11-08
+
+- Document real BIND 9.20.30 primary/secondary verification, including reload, SOA comparison, retransfer, NOTIFY and failure preflight. No command behavior changed.
+
 ## v0.2.0 — 2026-11-05
 
 - Expand to 23 governed MCP/CLI tools covering zone DNSSEC, managed keys, stale answers, running zone config and selected-server queries.

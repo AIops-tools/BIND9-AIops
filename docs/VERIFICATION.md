@@ -10,6 +10,35 @@ The [ISC BIND 9 Administrator Reference Manual](https://bind9.readthedocs.io/en/
 
 The current 0.2.0 candidate wheel was rebuilt and installed into a new environment outside the source tree; its MCP registry reports 23 tools. Its `retransfer-zone` and `notify-zone` CLI commands ran preview and real calls against strict local `rndc` stand-ins: previews issued no writes, each real call issued exactly one command and exited 2 for unknown completion. An earlier 0.2.0 candidate wheel was also installed outside the source tree; `bind9_aiops.__file__` resolved under `site-packages`. Its CLI ran diagnosis, reload preview and real reload against strict local command stand-ins. The log contained exactly one `rndc reload` (the preview wrote none), and the accepted command exited 2 for unknown outcome. These stand-ins are not a BIND daemon.
 
-## Not yet live verified
+## Disposable Linux VM verification (2026-11-08)
 
-This machine has `dig`, but no `named`, `rndc`, or `named-checkconf`. Docker's daemon was not running. No real BIND daemon, zone file, DNSSEC failure, secondary lag, retransfer or NOTIFY completion, or write cycle has been tested. These commands have no safe undo. Do not call the package production validated. The next gate is a disposable primary/secondary BIND lab with a deliberately stale secondary and a broken zone, compared with native command output.
+Two isolated Debian containers on the `Open-test` Ubuntu VM ran BIND 9.20.30
+with the 0.2.0 wheel installed. A real `aiops.test` zone served SOA and A
+records. The CLI read live `rndc status`, `zonestatus`, `named-checkconf -z`,
+`dig` response codes and a complete zone diagnosis. A reload preview made no
+change. A real `reload-zone` request was followed by an independent SOA and
+`zonestatus` check: the loaded serial moved from `2026110801` to
+`2026110802` and a new A record became queryable. The tool reported
+`outcomeUnknown` until that external check, as designed.
+
+An invalid record type in the zone file made config validation fail and
+blocked the tool's reload; the daemon's loaded timestamp and answer stayed
+unchanged. With a separate secondary, `compare-soa` correctly reported the
+primary at serial `2026110803` and the stale secondary at `2026110802`.
+`retransfer-zone` was previewed, then executed against the secondary; its SOA
+advanced to `2026110803` and comparison returned `serialsMatch: true`. A later
+manual `notify-zone` advanced the secondary to `2026110804` when the primary
+had `notify explicit` and `also-notify` configured. With NOTIFY disabled, the
+same command had been accepted but produced no secondary change, confirming
+why acceptance alone is reported as unknown. All configuration changes and
+DNS traffic stayed inside disposable containers.
+The current suite passed again (126 tests); Ruff and Bandit reported no Medium
+or High findings, and wheel/sdist build succeeded.
+
+## Still not live verified
+
+The earlier macOS machine had no `named`, `rndc` or `named-checkconf` and no
+working Docker daemon; the Linux VM run above closed the real-daemon and
+primary/secondary gaps. DNSSEC validation failure, transfer failure or timeout,
+and production resolver behavior remain untested. These writes have no safe
+undo. This disposable lab run does not establish production readiness.
