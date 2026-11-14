@@ -1,6 +1,8 @@
 """Governed BIND 9 read tools."""
 
-from typing import Optional
+from typing import Annotated, Optional
+
+from pydantic import Field
 
 from bind9_aiops.connection import domain
 from bind9_aiops.governance import governed_tool, mark_unknown
@@ -27,48 +29,104 @@ def bind_security_roots(target: Optional[str] = None) -> dict:
 @mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
-def bind_tcp_timeouts(target: Optional[str] = None) -> dict:
-    """[READ] Show current DNS TCP timeouts without changing them."""
+def bind_tcp_timeouts(
+    target: Annotated[
+        Optional[str],
+        Field(description=("Configured target name; omit to use the default connection.")),
+    ] = None,
+) -> dict:
+    """[READ] Show current DNS TCP timeouts without changing them.
+
+    Result: structured data or an explicit, sanitized operation error.
+    """
     return dns.tcp_timeouts(_get_connection(target))
 
 
 @mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
-def bind_signing_status(zone: str, target: Optional[str] = None) -> dict:
-    """[READ] List a zone's ongoing and completed DNSSEC signing state."""
+def bind_signing_status(
+    zone: Annotated[str, Field(description="DNS zone name to inspect or operate on.")],
+    target: Annotated[
+        Optional[str],
+        Field(description=("Configured target name; omit to use the default connection.")),
+    ] = None,
+) -> dict:
+    """[READ] List a zone's ongoing and completed DNSSEC signing state.
+
+    Use for the signing workflow state; use bind_dnssec_zone_status for the zone-level DNSSEC
+    status.
+
+    Result: structured data or an explicit, sanitized operation error.
+    """
     return dns.signing_status(_get_connection(target), zone)
 
 
 @mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
-def bind_dnssec_zone_status(zone: str, target: Optional[str] = None) -> dict:
-    """[READ] Show DNSSEC signing status for one zone."""
+def bind_dnssec_zone_status(
+    zone: Annotated[str, Field(description="DNS zone name to inspect or operate on.")],
+    target: Annotated[
+        Optional[str],
+        Field(description=("Configured target name; omit to use the default connection.")),
+    ] = None,
+) -> dict:
+    """[READ] Show DNSSEC signing status for one zone.
+
+    Use for one zone’s DNSSEC status; use bind_signing_status for signing workflow detail.
+
+    Result: structured data or an explicit, sanitized operation error.
+    """
     return dns.dnssec_zone_status(_get_connection(target), zone)
 
 
 @mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
-def bind_managed_keys_status(target: Optional[str] = None) -> dict:
-    """[READ] Show BIND managed DNSSEC trust-key status."""
+def bind_managed_keys_status(
+    target: Annotated[
+        Optional[str],
+        Field(description=("Configured target name; omit to use the default connection.")),
+    ] = None,
+) -> dict:
+    """[READ] Show BIND managed DNSSEC trust-key status.
+
+    Result: structured data or an explicit, sanitized operation error.
+    """
     return dns.managed_keys_status(_get_connection(target))
 
 
 @mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
-def bind_serve_stale_status(target: Optional[str] = None) -> dict:
-    """[READ] Show whether stale DNS answers are currently served."""
+def bind_serve_stale_status(
+    target: Annotated[
+        Optional[str],
+        Field(description=("Configured target name; omit to use the default connection.")),
+    ] = None,
+) -> dict:
+    """[READ] Show whether stale DNS answers are currently served.
+
+    Result: structured data or an explicit, sanitized operation error.
+    """
     return dns.serve_stale_status(_get_connection(target))
 
 
 @mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
-def bind_show_zone(zone: str, target: Optional[str] = None) -> dict:
-    """[READ] Show a running dynamic zone's configuration when enabled."""
+def bind_show_zone(
+    zone: Annotated[str, Field(description="DNS zone name to inspect or operate on.")],
+    target: Annotated[
+        Optional[str],
+        Field(description=("Configured target name; omit to use the default connection.")),
+    ] = None,
+) -> dict:
+    """[READ] Show a running dynamic zone's configuration when enabled.
+
+    Result: structured data or an explicit, sanitized operation error.
+    """
     return dns.show_zone(_get_connection(target), zone)
 
 
@@ -76,9 +134,20 @@ def bind_show_zone(zone: str, target: Optional[str] = None) -> dict:
 @governed_tool(risk_level="low")
 @tool_errors()
 def bind_query_server(
-    name: str, server: str, rrtype: str = "A", target: Optional[str] = None
+    name: Annotated[str, Field(description="DNS name to query or flush from cache.")],
+    server: Annotated[str, Field(description="DNS server address to query directly.")],
+    rrtype: Annotated[str, Field(description="DNS record type to query; defaults to A.")] = "A",
+    target: Annotated[
+        Optional[str],
+        Field(description=("Configured target name; omit to use the default connection.")),
+    ] = None,
 ) -> dict:
-    """[READ] Query a specified DNS server for a supported record type."""
+    """[READ] Query a specified DNS server for a supported record type.
+
+    Use when a specific DNS server must be queried; use bind_query for the configured server.
+
+    Result: structured data or an explicit, sanitized operation error.
+    """
     return dns.query_server(_get_connection(target), name, rrtype, server)
 
 
@@ -94,8 +163,14 @@ def bind_reload_zone(zone: str, dry_run: bool = False, target: Optional[str] = N
     if dry_run:
         return {"dryRun": True, "zone": zone, "before": before, "configCheck": check}
     response = conn.rndc_write("reload", zone)
-    return mark_unknown({"accepted": True, "zone": zone, "response": response,
-                         "note": "rndc acceptance does not prove the zone finished loading."})
+    return mark_unknown(
+        {
+            "accepted": True,
+            "zone": zone,
+            "response": response,
+            "note": "rndc acceptance does not prove the zone finished loading.",
+        }
+    )
 
 
 @mcp.tool()
@@ -109,10 +184,14 @@ def bind_refresh_zone(zone: str, dry_run: bool = False, target: Optional[str] = 
     if dry_run:
         return {"dryRun": True, "zone": zone, "before": before}
     response = conn.rndc_write("refresh", zone)
-    return mark_unknown({
-        "accepted": True, "zone": zone, "response": response,
-        "note": "Check zonestatus and SOA again before claiming transfer success.",
-    })
+    return mark_unknown(
+        {
+            "accepted": True,
+            "zone": zone,
+            "response": response,
+            "note": "Check zonestatus and SOA again before claiming transfer success.",
+        }
+    )
 
 
 @mcp.tool()
@@ -126,46 +205,71 @@ def bind_flush_name(name: str, dry_run: bool = False, target: Optional[str] = No
     if dry_run:
         return {"dryRun": True, "name": name, "wouldFlush": True}
     response = conn.rndc_write("flushname", name)
-    return mark_unknown({"accepted": True, "name": name, "response": response,
-                         "note": "The cache entry has no safe undo or observable prior value."})
+    return mark_unknown(
+        {
+            "accepted": True,
+            "name": name,
+            "response": response,
+            "note": "The cache entry has no safe undo or observable prior value.",
+        }
+    )
 
 
 @mcp.tool()
 @governed_tool(risk_level="high")
 @tool_errors()
-def bind_retransfer_zone(
-    zone: str, dry_run: bool = False, target: Optional[str] = None
-) -> dict:
+def bind_retransfer_zone(zone: str, dry_run: bool = False, target: Optional[str] = None) -> dict:
     """[WRITE] Request a secondary zone retransfer; completion remains unknown."""
     conn = _get_connection(target)
     zone = domain(zone)
     before = dns.zone_status(conn, zone)
     if dry_run:
-        return {"dryRun": True, "zone": zone, "before": before,
-                "wouldRun": "rndc retransfer"}
+        return {"dryRun": True, "zone": zone, "before": before, "wouldRun": "rndc retransfer"}
     response = conn.rndc_write("retransfer", zone)
-    return mark_unknown({
-        "accepted": True, "zone": zone, "before": before, "response": response,
-        "note": "Compare zonestatus and authoritative SOA after the transfer finishes.",
-    })
+    return mark_unknown(
+        {
+            "accepted": True,
+            "zone": zone,
+            "before": before,
+            "response": response,
+            "note": "Compare zonestatus and authoritative SOA after the transfer finishes.",
+        }
+    )
 
 
 @mcp.tool()
 @governed_tool(risk_level="medium")
 @tool_errors()
-def bind_notify_zone(zone: str, dry_run: bool = False, target: Optional[str] = None) -> dict:
-    """[WRITE] Resend NOTIFY for one zone; downstream refresh remains unknown."""
+def bind_notify_zone(
+    zone: Annotated[str, Field(description="DNS zone name to inspect or operate on.")],
+    dry_run: Annotated[
+        bool,
+        Field(description=("Preview the guarded operation without making the upstream change.")),
+    ] = False,
+    target: Annotated[
+        Optional[str],
+        Field(description=("Configured target name; omit to use the default connection.")),
+    ] = None,
+) -> dict:
+    """[WRITE] Resend NOTIFY for one zone; downstream refresh remains unknown.
+
+    Result: a preview for dry_run; real command acceptance leaves downstream completion unknown.
+    """
     conn = _get_connection(target)
     zone = domain(zone)
     before = dns.zone_status(conn, zone)
     if dry_run:
-        return {"dryRun": True, "zone": zone, "before": before,
-                "wouldRun": "rndc notify"}
+        return {"dryRun": True, "zone": zone, "before": before, "wouldRun": "rndc notify"}
     response = conn.rndc_write("notify", zone)
-    return mark_unknown({
-        "accepted": True, "zone": zone, "before": before, "response": response,
-        "note": "NOTIFY acceptance does not prove a secondary refreshed its zone.",
-    })
+    return mark_unknown(
+        {
+            "accepted": True,
+            "zone": zone,
+            "before": before,
+            "response": response,
+            "note": "NOTIFY acceptance does not prove a secondary refreshed its zone.",
+        }
+    )
 
 
 @mcp.tool()
@@ -187,8 +291,17 @@ def bind_config_check(target: Optional[str] = None) -> dict:
 @mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
-def bind_zone_status(zone: str, target: Optional[str] = None) -> dict:
-    """[READ] Get BIND's live zonestatus for one zone."""
+def bind_zone_status(
+    zone: Annotated[str, Field(description="DNS zone name to inspect or operate on.")],
+    target: Annotated[
+        Optional[str],
+        Field(description=("Configured target name; omit to use the default connection.")),
+    ] = None,
+) -> dict:
+    """[READ] Get BIND's live zonestatus for one zone.
+
+    Result: structured data or an explicit, sanitized operation error.
+    """
     return dns.zone_status(_get_connection(target), zone)
 
 
@@ -219,6 +332,17 @@ def bind_compare_soa(zone: str, secondary: str, target: Optional[str] = None) ->
 @mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
-def bind_diagnose_zone(zone: str, target: Optional[str] = None) -> dict:
-    """[READ] Correlate named, config, zone, SOA and DNSSEC probes; report failures."""
+def bind_diagnose_zone(
+    zone: Annotated[str, Field(description="DNS zone name to inspect or operate on.")],
+    target: Annotated[
+        Optional[str],
+        Field(description=("Configured target name; omit to use the default connection.")),
+    ] = None,
+) -> dict:
+    """[READ] Correlate named, config, zone, SOA and DNSSEC probes; report failures.
+
+    Use for multi-probe zone triage; use bind_zone_status for only the live zonestatus.
+
+    Result: structured data or an explicit, sanitized operation error.
+    """
     return dns.diagnose(_get_connection(target), zone)

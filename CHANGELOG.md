@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.2 — 2026-11-14
+
+- Clarify DNSSEC, zone diagnosis, query and write tool inputs and outcomes in MCP tool definitions.
+
 ## v0.2.1 — 2026-11-08
 
 - Document real BIND 9.20.30 primary/secondary verification, including reload, SOA comparison, retransfer, NOTIFY and failure preflight. No command behavior changed.

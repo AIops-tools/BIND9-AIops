@@ -1,6 +1,6 @@
 {
   "name": "@zw008/bind9-aiops",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Governed BIND 9 DNS operations — 23 MCP tools with audit.",
   "private": true,
   "license": "MIT",

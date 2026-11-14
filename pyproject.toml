@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bind9-aiops"
-version = "0.2.1"
+version = "0.2.2"
 description = "Governed BIND 9 DNS diagnosis for service, zones, DNSSEC and SOA replication."
 readme = "README.md"
 license = "MIT"
@@ -15,6 +15,7 @@ dependencies = [
     "rich>=13.0,<16.0",
     "pyyaml>=6.0,<7.0",
     "mcp[cli]>=2.0,<3.0",
+    "pydantic>=2.0,<3.0",
 ]
 
 [dependency-groups]
